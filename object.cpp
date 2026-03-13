@@ -46,12 +46,13 @@ class Object
             DrawCircle(draw_X, draw_Y, draw_rad*zoom, color);
         }
         
-        void calculateEnergy () {
+        void calculateKE() {
             //magnitude of velocity in KM/s, converted to meters
             double magV = sqrt(pow(vel.y, 2) + pow(vel.x, 2))*1000;
             KE = .5*mass*pow(magV, 2);
-            PE = ;
-            totalEnergy = ;
+        }
+        void calculatePE() {
+            
         }
 
         //Adding setter and getter functions

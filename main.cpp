@@ -15,8 +15,8 @@
 
 using namespace std;
 //screen width / height
-const int screenWidth = 1000;
-const int screenHeight = 750;
+int screenWidth = 1000;
+int screenHeight = 750;
 //variables needed to create a panning feature
 Vector2 offset = {0.0, 0.0};
 bool dragging = false;
@@ -87,10 +87,10 @@ int selectingTime(float &slideValue) {
         slideValue = 0;
     } else if (slideValue < 50){
         selection = 1;
-        slideValue = 30;
+        slideValue = 33;
     } else if (slideValue < 75) {
         selection = 2;
-        slideValue = 70;
+        slideValue = 66;
     } else {
         selection = 3;
         slideValue = 100;
@@ -104,7 +104,7 @@ int main() {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(screenWidth, screenHeight, "raylib window");
     SetWindowMinSize(screenWidth, screenHeight);
-    SetTargetFPS(144);
+    SetTargetFPS(300);
     Object planets[OBJECTNUM];
 
     //intializing the planets, 0 being the sun and 1-8 being the planets in the solar system
@@ -137,10 +137,11 @@ int main() {
     planets[7].setColor(BLUE);
     planets[8].setColor(BLUE);
     
-
+    //game loop
+    float dt;
     while (!WindowShouldClose()) {
         DrawFPS(10, 10);
-        float dt = GetFrameTime();
+        dt = GetFrameTime() * timeScale;
         for (int i=0; i < substeps; i++) {
             //Getting gravitational influence
             for (int j=0; j < OBJECTNUM; j++) {
@@ -155,8 +156,7 @@ int main() {
                         //calculates distance with pythagorean theorem 
                         float distance = sqrt(pow(changeInPos.x, 2) + pow(changeInPos.y, 2));
                         if (distance * 2000 <= planets[j].getRad()) continue;
-                        //calculates the gravitational force with newtons law
-                        //cout << G << " " << planets[i].getMass() << " " << planets[j].getMass() << " " << distance << endl;    
+                        //calculates the gravitational force with newtons law  
                         float force = G * planets[j].getMass() * planets[k].getMass() / pow(distance * 1000, 2);
 
                         acc.x += cos(angle)*force/planets[j].getMass() / float(1000);
@@ -164,7 +164,7 @@ int main() {
                     }
                 }
                 planets[j].setAcc(acc);
-                planets[j].getNextPos(dt * timeScale / substeps);
+                planets[j].getNextPos(dt / substeps);
             }
         }
 
@@ -190,6 +190,24 @@ int main() {
         float wheel = GetMouseWheelMove();
         zoom += wheel/3;
 
+        //calculating the total energy of the system
+        //creating a bar graph to show total energy of the system.
+        double KE = 0;
+        double PE = 0;
+        double total = 0;
+        for (int i=0; i < OBJECTNUM; i++) {
+            planets[i].calculateKE();
+            KE += planets[i].getKE();
+            for (int j=i+1; j < OBJECTNUM; j++) {  
+                    //move the calculatePe out of the objects class or calculate individual PE
+                    planets[i].calculatePE(G, planets[j].getMass(), planets[j].getPos());
+                    PE += planets[i].getPE();
+            }
+        }
+        total = KE + PE;
+
+        screenHeight = GetScreenHeight();
+        screenWidth = GetScreenWidth();
         BeginDrawing();
         ClearBackground((Color) {0, 0, 0, 0});
         
@@ -202,7 +220,7 @@ int main() {
             WHITE
         );
         GuiSliderBar(
-            (Rectangle){55, (float)GetScreenHeight() - 55, 200, 50},
+            (Rectangle){55, (float)screenHeight - 55, 200, 50},
             "day/s",
             "year/s",
             &slideValue,
@@ -214,9 +232,59 @@ int main() {
         selection = selectingTime(slideValue);
         timeScale = timeScaleOptions[selection];
 
-        //calculating the total energy of the system
-        //creating a bar graph to show total energy of the system.
-
+        //drawing Energy display   
+        //might want to add this to different file, 
+        //takes up a lot of space and makes main messy
+        //drawing line / text to seperate + and -
+        DrawLine(screenWidth - 70, 10, screenWidth - 70, 100, GRAY);
+        //Kinetic
+        DrawText(
+            TextFormat("Kenetic Energy: %.3e", KE),
+            GetScreenWidth() - 350,
+            20,
+            18,
+            WHITE   
+        );
+        float keBarWidth = 70 * KE/(KE + abs(PE));
+        DrawRectangle(
+            screenWidth - 70 - keBarWidth,
+            19,
+            keBarWidth,
+            20,
+            WHITE
+        );
+        //Potential
+        DrawText(
+            TextFormat("Potential Energy: %.3e", PE),
+            screenWidth - 370,
+            45,
+            18,
+            WHITE   
+        );
+        float peBarWidth = 70 * abs(PE)/abs(KE + abs(PE));
+        DrawRectangle(
+            screenWidth - 70,
+            45,
+            peBarWidth,
+            20,
+            WHITE
+        );
+        //total energy
+        DrawText(
+            TextFormat("Total Energy: %.3e", total),
+            screenWidth - 350,
+            70,
+            18,
+            WHITE   
+        );
+        float totalBarWidth = 70 * abs(total)/(KE + abs(PE)); 
+        DrawRectangle(
+            screenWidth - 70,
+            70,
+            totalBarWidth,
+            20,
+            WHITE
+        );
 
         //drawing planets
         for (int i=0; i < OBJECTNUM; i++) {

@@ -48,11 +48,15 @@ class Object
         
         void calculateKE() {
             //magnitude of velocity in KM/s, converted to meters
-            double magV = sqrt(pow(vel.y, 2) + pow(vel.x, 2))*1000;
+            double magV = sqrt(pow(vel.y*1000, 2) + pow(vel.x*1000, 2));
             KE = .5*mass*pow(magV, 2);
         }
-        void calculatePE() {
-            
+        //calculates PE given input mass and position
+        void calculatePE(double G, double iMass, Vector2 iPos) {
+            Vector2 changeInPos = pos - iPos;
+            //needed to be changes from KM to meters
+            double distance = sqrt(pow(changeInPos.x*1000, 2) + pow(changeInPos.y*1000, 2));
+            PE = -(G * mass * iMass) / distance;
         }
 
         //Adding setter and getter functions
@@ -76,4 +80,10 @@ class Object
 
         void setColor(Color val) { color = val; }
         Color getColor() { return color; }
+
+        void setKE(double val) { KE = val; }
+        double getKE() { return KE; }
+        
+        void setPE(double val) { PE = val; }
+        double getPE() { return PE; }
 };
